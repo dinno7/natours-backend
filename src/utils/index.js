@@ -1,4 +1,5 @@
 module.exports = {
-  createError: require('./createError'),
+  AppError: require('./appError'),
+  catchError: require('./catchError'),
   APIFeatures: require('./APIFeatures')
 };

@@ -1,3 +1,10 @@
+process.on('uncaughtException', err => {
+  console.error('❗️ Uncaught Exception ❗', err.name, err.message);
+  console.error('📝', err);
+  console.log('----------------');
+  process.exit(1);
+});
+
 const mongoose = require('mongoose');
 const app = require('./src/app');
 
@@ -22,11 +29,18 @@ mongoose
     useFindAndModify: false
   })
   .then(() => console.log('✨', 'Mogodb connected successful.'))
-  .catch(err =>
-    console.log('⭕️ ~ ERROR  ~ in natours: server.js at line 21 ~> ❗', err)
-  );
+  .catch(err => console.log('⭕️ ~ ERROR  ~ in natours: server.js ~> ❗', err));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log('Listening on port ', PORT);
+const server = app.listen(PORT, () => {
+  console.log('✨ Listening on port ', PORT);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('❗️ Unhandled Rejection ❗', err.name, err.message);
+  console.error('📝', err);
+  console.log('----------------');
+  server.close(() => {
+    process.exit(1);
+  });
 });

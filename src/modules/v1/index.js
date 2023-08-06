@@ -2,6 +2,8 @@
 // >> Don not change this file, just add routes to /src/modules/v*/routes.js
 // - Your declared routes in ./routes.js, added here automatically.
 
+const { AppError } = require('../../utils');
+const errorController = require('./global/error.controller');
 const allRoutes = require('./routes');
 function registerRoutes(app) {
   try {
@@ -9,6 +11,16 @@ function registerRoutes(app) {
     for (let route in allRoutes) {
       app.use(`/api/${apiVersion}/${route}`, allRoutes[route]);
     }
+
+    // >> Handle 404 routes on service
+    app.all('*', (req, res, next) => {
+      return next(
+        new AppError(`Can't find (${req.originalUrl}) on this service.`, 404)
+      );
+    });
+
+    // >> Global error handler
+    app.use(errorController);
 
     return true;
   } catch (err) {
