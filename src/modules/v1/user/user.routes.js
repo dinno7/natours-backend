@@ -2,6 +2,11 @@ const { Router } = require('express');
 
 const router = Router();
 const userController = require('./user.controllers');
+const authController = require('../global/auth.controller');
+const { catchError } = require('../../../utils');
+
+router.post('/signup', catchError(authController.singUp));
+router.post('/login', catchError(authController.login));
 
 // >> / ==> /api/v1/users
 router
