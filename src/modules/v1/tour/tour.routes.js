@@ -2,7 +2,6 @@ const { Router } = require('express');
 
 const router = Router();
 const tourController = require('./tour.controllers');
-const { objectIdValidation } = require('../../../middlewares/route');
 
 // >> / ==> /api/v1/tours/
 router
@@ -17,7 +16,6 @@ router
 router.route('/tours-status').get(tourController.getToursStatus);
 router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 
-router.param('id', objectIdValidation);
 router
   .route('/:id')
   .get(tourController.getTourById)

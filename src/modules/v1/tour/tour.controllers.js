@@ -1,5 +1,5 @@
 const Tour = require('./tour.model');
-const { APIFeatures, AppError } = require('../../../utils');
+const { APIFeatures, AppError, catchError } = require('../../../utils');
 
 module.exports = {
   get5TopTours: function(req, res, next) {
@@ -9,7 +9,7 @@ module.exports = {
     next();
   },
 
-  getToursStatus: async function(req, res, next) {
+  getToursStatus: catchError(async function(req, res, next) {
     const result = await Tour.aggregate([
       { $match: { ratingsAverage: { $gte: 4.6 } } },
       {
@@ -29,9 +29,9 @@ module.exports = {
       result: result.length,
       data: result
     });
-  },
+  }),
 
-  getMonthlyPlan: async function(req, res, next) {
+  getMonthlyPlan: catchError(async function(req, res, next) {
     const monthsInString = [
       '',
       'January',
@@ -101,9 +101,9 @@ module.exports = {
       result: plan.length,
       data: plan
     });
-  },
+  }),
 
-  getAllTours: async function(req, res, next) {
+  getAllTours: catchError(async function(req, res, next) {
     // // >> Filtering
     // const reqQuery = { ...req.query };
     // const excludeQuery = ['sort', 'page', 'limit', 'fields'];
@@ -161,9 +161,9 @@ module.exports = {
     }
 
     return res.status(200).send(responseObj);
-  },
+  }),
 
-  getTourById: async function(req, res, next) {
+  getTourById: catchError(async function(req, res, next) {
     const tourId = req.params.id;
     const tour = await Tour.findById(tourId);
     if (!tour) return next(new AppError('There is no tour with sent id', 404));
@@ -174,9 +174,9 @@ module.exports = {
         tour: tour
       }
     });
-  },
+  }),
 
-  createTour: async function(req, res, next) {
+  createTour: catchError(async function(req, res, next) {
     let params = req.body;
     const newTour = await Tour.create(params);
     return res.status(201).send({
@@ -186,9 +186,9 @@ module.exports = {
         tour: newTour
       }
     });
-  },
+  }),
 
-  updateTour: async function(req, res, next) {
+  updateTour: catchError(async function(req, res, next) {
     let tourId = req.params.id;
     let params = JSON.parse(JSON.stringify(req.body));
     const updatedTour = await Tour.findByIdAndUpdate(
@@ -209,9 +209,9 @@ module.exports = {
         updatedTour
       }
     });
-  },
+  }),
 
-  deleteTour: async function(req, res, next) {
+  deleteTour: catchError(async function(req, res, next) {
     const tourId = req.params.id;
     const deletedTour = await Tour.findByIdAndDelete(tourId);
 
@@ -223,5 +223,5 @@ module.exports = {
       result: 1,
       data: { deletedTour }
     });
-  }
+  })
 };
