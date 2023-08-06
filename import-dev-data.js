@@ -68,3 +68,6 @@ else {
   console.log('✨', 'Nothing changed!');
   process.exit();
 }
+
+// ?> node import-dev-date.js -i OR node import-dev-date.js -import => Import Tours data in db
+// ?> node import-dev-date.js -d OR node import-dev-date.js -delete => Remove all Tours data from db
