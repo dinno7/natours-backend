@@ -100,5 +100,14 @@ module.exports = {
       );
     req.user = currentUser;
     next();
-  })
+  }),
+
+  restrictTo: (...roles) => (req, res, next) => {
+    const user = req.user;
+    if (!user || !roles.includes(user.role))
+      return next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    next();
+  }
 };
