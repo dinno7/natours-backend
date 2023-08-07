@@ -7,12 +7,17 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     handleDevError(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    let error = JSON.parse(JSON.stringify(err));
+    let error = { ...err, message: err.message, name: err.name };
+
     if (error.name?.toLowerCase() === 'casterror')
       error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
     if (error.name?.toLowerCase() === 'validationerror')
       error = handleValidationErrorDB(error);
+
+    if (error?.name === 'JsonWebTokenError') error = handleJWTError();
+    if (error?.name === 'TokenExpiredError') error = handleJWTExpired();
+
     handleProdError(error, res);
   }
 };
@@ -70,4 +75,11 @@ function handleValidationErrorDB(err) {
     ?.map(el => errors[el].message)
     ?.join(', ');
   return new AppError(msg, 400);
+}
+
+function handleJWTExpired() {
+  return new AppError('Your token was expired, please login again', 401);
+}
+function handleJWTError() {
+  return new AppError('Invalid token, please login again', 401);
 }
