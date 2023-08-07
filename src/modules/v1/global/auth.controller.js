@@ -109,5 +109,85 @@ module.exports = {
         new AppError('You do not have permission to perform this action', 403)
       );
     next();
-  }
+  },
+
+  forgotPassword: catchError(async function(req, res, next) {
+    // 1) Get user based on POSTed email
+    const { email } = req.body;
+    if (!email) return next(new AppError('Please provide email address', 400));
+    const user = await User.findOne({ email });
+    if (!user)
+      return next(new AppError('There is no user with this email', 404));
+    // 2) Generate random reset token
+    const resetToken = user.generatePasswordResetToken();
+    user.save({ validateBeforeSave: false });
+    // 3) Send it to user's email
+    const resetUrl = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    const message = `Forgot your password?
+    Submit a PATCH request with your new password and confirm password to: ${resetUrl}
+    If you did not forgot your password, please ignore this email!`;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Reset your password (Validate for 10 mins)',
+        message
+      });
+
+      res.send({
+        ok: true,
+        status: 'success',
+        message:
+          'We sent email contain reset password url, check your email inbox'
+      });
+    } catch (error) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      user.save({ validateBeforeSave: false });
+
+      return next(
+        new AppError(
+          'There was an error sending the email, please try again later!',
+          500
+        )
+      );
+    }
+  }),
+
+  resetPassword: catchError(async function(req, res, next) {
+    const { password, passwordConfirm } = req.body;
+    const { token } = req.params;
+    // 1) Check password, passwordConfirm, token existence
+    if (!password || !passwordConfirm || !token)
+      return next(
+        new AppError(
+          'Please provide new password and confirm password and reset password token',
+          400
+        )
+      );
+
+    // 2) Find user by token and token expires date
+    const user = await User.getUserByResetPasswordToken(token);
+    if (!user)
+      return next(
+        new AppError("Invalid token or token's expires time has reached!", 403)
+      );
+
+    // 3) Set new password for user
+    user.password = password;
+    user.passwordConfirm = passwordConfirm;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    const jwtToken = generateJWT(user._id);
+
+    res.send({
+      ok: true,
+      status: 'success',
+      token: jwtToken
+    });
+  })
 };
