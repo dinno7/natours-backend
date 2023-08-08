@@ -1,4 +1,5 @@
 # Some details about project structure for developers
+This is just a exercise project
 
 ## Add new module
 
