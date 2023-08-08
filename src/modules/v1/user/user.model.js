@@ -53,13 +53,23 @@ const userSchema = new mongoose.Schema(
     },
     passwordUpdatedAt: Date,
     passwordResetToken: String,
-    passwordResetExpires: Date
+    passwordResetExpires: Date,
+    active: {
+      type: Boolean,
+      default: true,
+      select: false
+    }
   },
   { timestamps: true }
 );
 
 userSchema.pre('save', preSave_convertUserPasswordToHash);
 userSchema.pre('save', preSave_setPasswordUpdatedAt);
+
+userSchema.pre(/^find/, function(next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 
 userSchema.methods.isPasswordCorrect = isPasswordCorrect;
 userSchema.methods.changedPasswordAfter = changedPasswordAfter;

@@ -172,7 +172,7 @@ module.exports = {
     createSendJWTToken(res, user, 200);
   }),
 
-  updatePassword: catchError(async function(req, res, next) {
+  updateMyPassword: catchError(async function(req, res, next) {
     if (!req?.user?._id) return next(new AppError('Please login first', 401));
 
     const { currentPassword, newPassword, newPasswordConfirm } = req.body;
@@ -203,7 +203,7 @@ module.exports = {
     createSendJWTToken(res, user, 200);
   }),
 
-  updateUser: catchError(async function(req, res, next) {
+  updateMe: catchError(async function(req, res, next) {
     const body = req.body;
     // 1) Create error if user POSTs password data
     if (body.password || body.passwordConfirm)
@@ -230,6 +230,18 @@ module.exports = {
       data: {
         updatedUser
       }
+    });
+  }),
+
+  deleteMe: catchError(async function(req, res, next) {
+    await User.findByIdAndUpdate(req.user._id, {
+      active: false
+    });
+
+    res.status(200).send({
+      ok: true,
+      status: 'success',
+      data: null
     });
   })
 };
