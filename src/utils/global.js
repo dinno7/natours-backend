@@ -34,3 +34,12 @@ exports.createSendJWTToken = function(res, user, statusCode = 200) {
     }
   });
 };
+
+exports.filterObj = function(obj, ...allowedFields) {
+  const newObj = {};
+  Object.keys(obj).forEach(el => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  });
+
+  return newObj;
+};
