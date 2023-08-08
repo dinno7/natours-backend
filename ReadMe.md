@@ -1,6 +1,5 @@
 # Some details about project structure for developers
-This is just a exercise project
-
+> This is a practice project from this [Udemy course](https://www.udemy.com/course/nodejs-express-mongodb-bootcamp/) made by [Jonas Schmedtmann](https://www.udemy.com/course/nodejs-express-mongodb-bootcamp/#instructor-1), but I've made a few changes, especially to the **design pattern**.
 ## Add new module
 
 #### Create new folder equal to module name inside src/modules/v\*
