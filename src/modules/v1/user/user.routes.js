@@ -8,6 +8,12 @@ router.post('/signup', authController.singUp);
 router.post('/login', authController.login);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+router.patch(
+  '/updateMyPassword',
+  authController.protect,
+  authController.updatePassword
+);
+router.patch('/updateMe', authController.protect, authController.updateUser);
 
 // >> / ==> /api/v1/users
 router

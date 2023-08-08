@@ -4,12 +4,7 @@ const { promisify } = require('util');
 const User = require('../user/user.model');
 const { AppError, catchError } = require('../../../utils');
 const { sendEmail } = require('./email.controller');
-
-// >> Utils functions:
-const generateJWT = id =>
-  jwt.sign({ id }, process.env.JWT_SECRET_64, {
-    expiresIn: process.env.JWT_EXPIRES_IN
-  });
+const { createSendJWTToken, filterObj } = require('../../../utils/global');
 
 // >> Controllers:
 module.exports = {
@@ -22,16 +17,8 @@ module.exports = {
       passwordConfirm
     });
 
-    const token = generateJWT(newUser._id);
     newUser.password = undefined;
-    res.send({
-      ok: true,
-      status: 'success',
-      token,
-      data: {
-        user: newUser
-      }
-    });
+    createSendJWTToken(res, newUser, 201);
   }),
 
   login: catchError(async function(req, res, next) {
@@ -49,16 +36,7 @@ module.exports = {
 
     // Remove password from response and generate token then send them as a response
     user.password = undefined;
-    const token = generateJWT(user._id);
-
-    res.send({
-      ok: true,
-      status: 'success',
-      token,
-      data: {
-        user
-      }
-    });
+    createSendJWTToken(res, user, 201);
   }),
 
   protect: catchError(async function(req, res, next) {
@@ -157,10 +135,10 @@ module.exports = {
   }),
 
   resetPassword: catchError(async function(req, res, next) {
-    const { password, passwordConfirm } = req.body;
+    const { newPassword, newPasswordConfirm } = req.body;
     const { token } = req.params;
     // 1) Check password, passwordConfirm, token existence
-    if (!password || !passwordConfirm || !token)
+    if (!newPassword || !newPasswordConfirm || !token)
       return next(
         new AppError(
           'Please provide new password and confirm password and reset password token',
@@ -175,19 +153,83 @@ module.exports = {
         new AppError("Invalid token or token's expires time has reached!", 403)
       );
 
+    // 3) Check if user choose new password similar current password
+    if (await user.isPasswordCorrect(newPassword, user.password))
+      return next(
+        new AppError(
+          'You can not choose new password similar your current password, Login again with this password or choose another new password',
+          400
+        )
+      );
     // 3) Set new password for user
-    user.password = password;
-    user.passwordConfirm = passwordConfirm;
+    user.password = newPassword;
+    user.passwordConfirm = newPasswordConfirm;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
 
-    const jwtToken = generateJWT(user._id);
+    // 4) Create and send JWT token
+    createSendJWTToken(res, user, 200);
+  }),
+
+  updatePassword: catchError(async function(req, res, next) {
+    if (!req?.user?._id) return next(new AppError('Please login first', 401));
+
+    const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+    if (!currentPassword || !newPassword || !newPasswordConfirm)
+      return next(
+        new AppError(
+          'Please provide your current password and new password and confirm of new password',
+          400
+        )
+      );
+
+    if (currentPassword === newPassword)
+      return next(
+        new AppError(
+          'Your new password is your current password, please choose another one',
+          400
+        )
+      );
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!(await user.isPasswordCorrect(currentPassword, req.user.password)))
+      return next(new AppError('Your current password is wrong', 401));
+
+    user.password = newPassword;
+    user.passwordConfirm = newPasswordConfirm;
+    await user.save();
+
+    createSendJWTToken(res, user, 200);
+  }),
+
+  updateUser: catchError(async function(req, res, next) {
+    const body = req.body;
+    // 1) Create error if user POSTs password data
+    if (body.password || body.passwordConfirm)
+      return next(
+        new AppError(
+          'This route is not for password update. Please use /updateMyPassword',
+          400
+        )
+      );
+
+    // 2) Filter out unwanted fields
+    const filteredFields = filterObj(body, 'name', 'email');
+
+    // 3) Update user document
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      filteredFields,
+      { new: true, runValidators: true }
+    );
 
     res.send({
       ok: true,
       status: 'success',
-      token: jwtToken
+      data: {
+        updatedUser
+      }
     });
   })
 };
