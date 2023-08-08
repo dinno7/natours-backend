@@ -15,7 +15,7 @@ function registerRoutes(app) {
     // >> Handle 404 routes on service
     app.all('*', (req, res, next) => {
       return next(
-        new AppError(`Can't find (${req.originalUrl}) on this service.`, 404)
+        new AppError(`Can't find (${req.originalUrl}) on this service.`, 501)
       );
     });
 

@@ -4,7 +4,7 @@
   "description": "The main project for \"Udemy_Node.js_Express_MongoDB_More_The_Complete_Bootcamp_2022_2022-2\" tutorial.",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js -e js,ts,html,json,env",
+    "dev": "nodemon server.js -e js,ts,html,json",
     "prod": "NODE_ENV=production nodemon server.js"
   },
   "author": "Dinno",
