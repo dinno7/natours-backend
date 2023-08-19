@@ -10,12 +10,11 @@ class APIFeatures {
     excludeQuery.forEach(item => delete reqQuery[item]);
 
     // >> This is for when you wanna get for ex duration[gt] and convert gt to $gt
-    // let filters = JSON.stringify(reqQuery);
-    // filters = filters.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-    // filters = JSON.parse(filters);
-    // this.query = this.query.find(filters);
+    let filters = JSON.stringify(reqQuery);
+    filters = filters.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    filters = JSON.parse(filters);
 
-    this.query = this.query.find(reqQuery);
+    this.query = this.query.find(filters);
     return this;
   }
   sort() {
