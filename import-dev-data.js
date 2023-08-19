@@ -1,6 +1,7 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const Tour = require('./src/modules/v1/tour/tour.model');
+const Review = require('./src/modules/v1/review/review.model');
 
 // - Inject environment variables
 const dotenv = require('dotenv');
@@ -30,13 +31,17 @@ mongoose
 // >> Read json file
 
 const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/src/static/data/tours-simple.json`)
+  fs.readFileSync(`${__dirname}/src/static/data/tours.json`)
+);
+
+const reviews = JSON.parse(
+  fs.readFileSync(`${__dirname}/src/static/data/reviews.json`)
 );
 
 // >> Import data to db
-const importData = async () => {
+const importData = async (Model, entity) => {
   try {
-    await Tour.insertMany(tours);
+    await Model.insertMany(entity);
     console.log('✨', 'Data imported successful.');
   } catch (err) {
     console.log(
@@ -47,9 +52,9 @@ const importData = async () => {
   process.exit();
 };
 
-const deleteData = async () => {
+const deleteData = async Model => {
   try {
-    await Tour.deleteMany({});
+    await Model.deleteMany({});
     console.log('✨', 'Data deleted successful.');
   } catch (err) {
     console.log(
@@ -61,10 +66,18 @@ const deleteData = async () => {
 };
 
 // > Check agrs
+if (!process.argv[2] || !process.argv[3]) {
+  console.log('✨', 'Nothing changed!\nPlease define action and entity.');
+  return process.exit();
+}
 
-if (process.argv[2] == '-i' || process.argv[2] == '--import') importData();
-else if (process.argv[2] == '-d' || process.argv[2] == '--delete') deleteData();
-else {
+if (process.argv[2] == '-i' || process.argv[2] == '--import') {
+  if (process.argv[3]?.startsWith('tour')) importData(Tour, tours);
+  else if (process.argv[3]?.startsWith('review')) importData(Review, reviews);
+} else if (process.argv[2] == '-d' || process.argv[2] == '--delete') {
+  if (process.argv[3]?.startsWith('tour')) deleteData(Tour);
+  else if (process.argv[3]?.startsWith('review')) deleteData(Review);
+} else {
   console.log('✨', 'Nothing changed!');
   process.exit();
 }
