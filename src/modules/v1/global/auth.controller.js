@@ -4,7 +4,8 @@ const { promisify } = require('util');
 const User = require('../user/user.model');
 const { AppError, catchError } = require('../../../utils');
 const { sendEmail } = require('./email.controller');
-const { createSendJWTToken, filterObj } = require('../../../utils/global');
+const { filterObj } = require('../../../utils/global');
+const { createSendJWTToken } = require('../user/user.utils');
 
 // >> Controllers:
 module.exports = {
@@ -17,7 +18,6 @@ module.exports = {
       passwordConfirm
     });
 
-    newUser.password = undefined;
     createSendJWTToken(res, newUser, 201);
   }),
 
@@ -35,7 +35,6 @@ module.exports = {
       return next(new AppError('Incorrect email or password', 401));
 
     // Remove password from response and generate token then send them as a response
-    user.password = undefined;
     createSendJWTToken(res, user, 201);
   }),
 
