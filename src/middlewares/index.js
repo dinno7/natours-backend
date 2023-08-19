@@ -1,20 +1,49 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 function registerMiddlewares(app) {
   try {
+    // Helmet, Set http headers
+    app.use(helmet());
+
     if (process.env.NODE_ENV === 'development') {
       app.use(morgan('dev'));
     }
-    app.use(bodyParser.json({ limit: '1mb' }));
+    // Rate limiting
+    app.use(
+      rateLimit({
+        max: 100,
+        windowMx: 1000 * 60 * 60,
+        message: {
+          ok: false,
+          status: 'fail',
+          message: 'Too many attempt, please try again in an hour!'
+        }
+      })
+    );
+
+    // Body parser, insert data to req.body
+    app.use(bodyParser.json({ limit: '10kb' }));
     app.use(
       bodyParser.urlencoded({
         extended: true,
         parameterLimit: 100000,
-        limit: '1mb'
+        limit: '10kb'
       })
     );
+    // Data sanitization against NoSQL query injection
+    app.use(mongoSanitize());
+    // Prevent XSS attacks
+    app.use(xss());
+    // Preventing parameters pollution
+    app.use(hpp());
+    // app.use('/api/v1/tours', hpp({ whitelist: ['duration', 'price] }));
     app.use(express.static(`${__dirname}/../public`));
 
     return true;
