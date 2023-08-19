@@ -1,10 +1,16 @@
 const { Router } = require('express');
-
 const router = Router();
+
 const tourController = require('./tour.controllers');
+const reviewController = require('../review/review.controller');
 const authController = require('../global/auth.controller');
 
+const reviewsRouter = require('../review/review.routes');
+
 // >> / ==> /api/v1/tours/
+
+router.use('/:tourId/reviews/:reviewId?', reviewsRouter);
+
 router
   .route('/')
   .get(authController.protect, tourController.getAllTours)
