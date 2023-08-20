@@ -24,3 +24,21 @@ exports.filterObj = function(obj, ...allowedFields) {
 
   return newObj;
 };
+
+exports.sendSuccessResponse = function(
+  res,
+  data = {},
+  resultCount = undefined,
+  statusCode = 200,
+  bodyData = {}
+) {
+  return res.status(statusCode).send({
+    ok: true,
+    status: 'success',
+    result: resultCount,
+    data,
+    ...bodyData
+  });
+};
+
+exports.getModelName = Model => Model?.modelName?.toLowerCase() || 'document';
