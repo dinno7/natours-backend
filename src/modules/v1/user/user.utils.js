@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { hashToken } = require('../../../utils/global');
+const { hashToken, sendSuccessResponse } = require('../../../utils/global');
 
 // >> Utils:
 exports.generateJWTToken = id =>
@@ -24,14 +24,7 @@ exports.createSendJWTToken = function(res, user, statusCode = 200) {
 
   user.password = undefined;
 
-  res.status(statusCode).send({
-    ok: true,
-    status: 'success',
-    token: jwtToken,
-    data: {
-      user
-    }
-  });
+  return sendSuccessResponse(res, { user }, 1, statusCode, { token: jwtToken });
 };
 
 // >> Mongodb middlewares:
