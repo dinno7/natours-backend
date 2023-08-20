@@ -27,6 +27,11 @@ exports.createSendJWTToken = function(res, user, statusCode = 200) {
   return sendSuccessResponse(res, { user }, 1, statusCode, { token: jwtToken });
 };
 
+exports.setUserIdInParams = async function(req, res, next) {
+  req.params.id = req.user._id;
+  next();
+};
+
 // >> Mongodb middlewares:
 exports.preSave_convertUserPasswordToHash = async function(next) {
   if (!this.isModified('password')) return next();

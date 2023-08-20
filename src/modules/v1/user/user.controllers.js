@@ -1,10 +1,9 @@
-const fs = require('fs');
 const User = require('./user.model');
 const { sendSuccessResponse } = require('../../../utils/global');
 const { factory } = require('../../../utils');
+const { setUserIdInParams } = require('./user.utils');
 
 const usersFilePath = `${__dirname}/../../../static/data/users.json`;
-const users = JSON.parse(fs.readFileSync(usersFilePath));
 
 exports.getAllUsers = async function(req, res) {
   const users = await User.find();
@@ -18,10 +17,4 @@ exports.createUser = (req, res) => {
 };
 
 exports.getUserById = factory.getOneById(User);
-
 exports.getMe = [setUserIdInParams, this.getUserById];
-
-async function setUserIdInParams(req, res, next) {
-  req.params.id = req.user._id;
-  next();
-}
