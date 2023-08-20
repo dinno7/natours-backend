@@ -2,7 +2,6 @@ const { Router } = require('express');
 const router = Router();
 
 const tourController = require('./tour.controllers');
-const reviewController = require('../review/review.controller');
 const authController = require('../global/auth.controller');
 
 const reviewsRouter = require('../review/review.routes');
@@ -28,7 +27,6 @@ router
   .get(tourController.getTourById)
   .patch(tourController.updateTour)
   .delete(
-    authController.protect,
     authController.restrictTo('admin', 'lead-guide'),
     tourController.deleteTour
   );
