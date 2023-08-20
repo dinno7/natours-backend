@@ -1,7 +1,7 @@
 class APIFeatures {
-  constructor(Model, queryStr) {
+  constructor(Model, queryStr, initialFindFilter = {}) {
     this.Model = Model;
-    this.query = Model.find();
+    this.query = Model.find(initialFindFilter);
     this.queryStr = queryStr;
   }
   filter() {
@@ -36,7 +36,7 @@ class APIFeatures {
     return this;
   }
 
-  paginate(defaultPage = 1, defaultLimit = 20) {
+  paginate(defaultPage = 1, defaultLimit = 100) {
     let page = +this.queryStr.page || defaultPage;
     let limit = +this.queryStr.limit || defaultLimit;
     let skip = (page - 1) * limit;
