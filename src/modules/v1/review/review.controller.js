@@ -6,7 +6,7 @@ const {
 } = require('./review.utils');
 
 module.exports = {
-  getAllReviews: factory.getAll(Review, setInitialGetAllReviewFilters),
+  getAllReviews: [setInitialGetAllReviewFilters, factory.getAll(Review)],
   getReviewById: factory.getOneById(Review),
   createReview: factory.createOne(Review, setBeforeCreateReviewData),
   updateReview: factory.updateOne(Review),

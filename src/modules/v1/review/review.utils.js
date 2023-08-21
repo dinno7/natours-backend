@@ -10,10 +10,14 @@ exports.setBeforeCreateReviewData = function(req, res, next) {
 };
 
 // This is for get reviews in one special tour
-exports.setInitialGetAllReviewFilters = function(req) {
+exports.setInitialGetAllReviewFilters = function(req, res, next) {
   const { tourId, reviewId } = req.params;
-  let filter = {};
-  if (tourId) filter.tour = tourId;
-  if (reviewId) filter._id = reviewId;
-  return filter;
+  req.initialFilters = {};
+  if (tourId) {
+    req.initialFilters.tour = tourId;
+  }
+  if (reviewId) {
+    req.initialFilters._id = reviewId;
+  }
+  next();
 };

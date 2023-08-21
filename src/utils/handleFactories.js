@@ -71,14 +71,15 @@ module.exports = {
       return sendSuccessResponse(res, { [modelName]: doc }, 1);
     }),
 
-  getAll: (Model, getInitialFindFilter = null) =>
+  getAll: Model =>
     catchError(async function(req, res, next) {
       const modelName = getModelName(Model);
-      let initialFindFilter = {};
-      if (getInitialFindFilter)
-        initialFindFilter = getInitialFindFilter(req, res, next);
 
-      let { query } = new APIFeatures(Model, req.query, initialFindFilter)
+      let { query } = new APIFeatures(
+        Model,
+        req.query,
+        req.initialFilters || {}
+      )
         .filter()
         .sort()
         .limitFields()
