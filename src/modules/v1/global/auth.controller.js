@@ -75,16 +75,18 @@ exports.protect = catchError(async function(req, res, next) {
   next();
 });
 
-exports.restrictTo = (...roles) => [
+exports.restrictTo = (...roles) => (req, res, next) => {
+  const user = req.user;
+  if (!user || !roles.includes(user.role))
+    return next(
+      new AppError('You do not have permission to perform this action', 403)
+    );
+  next();
+};
+
+exports.protectAndRestrictTo = (...roles) => [
   this.protect,
-  (req, res, next) => {
-    const user = req.user;
-    if (!user || !roles.includes(user.role))
-      return next(
-        new AppError('You do not have permission to perform this action', 403)
-      );
-    next();
-  }
+  this.restrictTo(...roles)
 ];
 
 exports.forgotPassword = catchError(async function(req, res, next) {
