@@ -1,86 +1,113 @@
+const { select, checkbox } = require('@inquirer/prompts');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const Tour = require('./src/modules/v1/tour/tour.model');
 const Review = require('./src/modules/v1/review/review.model');
+const User = require('./src/modules/v1/user/user.model');
 
 // - Inject environment variables
 const dotenv = require('dotenv');
 dotenv.config({ path: './.env' });
 
-let DB;
-if (process.env.NODE_ENV === 'development') {
-  DB = process.env.DB_URL_LOCAL;
-} else {
-  DB = process.env.DB_URL.replace(
-    /<USERNAME>/,
-    process.env.DB_USERNAME
-  ).replace(/<PASSWORD>/, process.env.DB_PASSWORD);
-}
+async function connectToDatabase() {
+  let DB;
+  if (process.env.NODE_ENV === 'development') {
+    DB = process.env.DB_URL_LOCAL;
+  } else {
+    DB = process.env.DB_URL.replace(
+      /<USERNAME>/,
+      process.env.DB_USERNAME
+    ).replace(/<PASSWORD>/, process.env.DB_PASSWORD);
+  }
 
-mongoose
-  .connect(DB, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false
-  })
-  .then(() => console.log('✨', 'Mogodb connected successful.'))
-  .catch(err =>
-    console.log('⭕️ ~ ERROR  ~ in natours: server.js at line 21 ~> ❗', err)
-  );
+  try {
+    await mongoose.connect(DB, {
+      useNewUrlParser: true,
+      useCreateIndex: true,
+      useFindAndModify: false
+    });
+    console.log('✨', 'Mogodb connected successful.');
+  } catch (err) {
+    console.log('\n❌ ~ ERROR  ~ in natours: server.js at line 21 ~> ❗', err);
+    process.exit(1);
+  }
+}
 
 // >> Read json file
 
 const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/src/static/data/tours.json`)
+  fs.readFileSync(`${__dirname}/src/static/data/tours.json`, 'utf-8')
+);
+const reviews = JSON.parse(
+  fs.readFileSync(`${__dirname}/src/static/data/reviews.json`, 'utf-8')
 );
 
-const reviews = JSON.parse(
-  fs.readFileSync(`${__dirname}/src/static/data/reviews.json`)
+// ? All user password is test1234
+const users = JSON.parse(
+  fs.readFileSync(`${__dirname}/src/static/data/users.json`, 'utf-8')
 );
 
 // >> Import data to db
+const getModelName = Model => Model?.modelName || '';
 const importData = async (Model, entity) => {
   try {
-    await Model.insertMany(entity);
-    console.log('✨', 'Data imported successful.');
+    await Model.create(entity, { validateBeforeSave: false });
+    console.log('🔰', `${getModelName(Model)} dev data imported successful.`);
   } catch (err) {
     console.log(
-      '⭕️ ~ ERROR  ~ in natours: import-dev-data.js at line 42 ~> ❗',
+      '❌ ~ ERROR  ~ in natours: import-dev-data.js at line 42 ~> ❗',
       err.message || ''
     );
   }
-  process.exit();
 };
 
 const deleteData = async Model => {
   try {
     await Model.deleteMany({});
-    console.log('✨', 'Data deleted successful.');
+    console.log('⭕', `${getModelName(Model)} documents deleted successful.`);
   } catch (err) {
     console.log(
-      '⭕️ ~ ERROR  ~ in natours: import-dev-data.js at line 56 ~> ❗',
+      '❌ ~ ERROR  ~ in natours: import-dev-data.js at line 56 ~> ❗',
       err.message || ''
     );
   }
-  process.exit();
 };
 
-// > Check agrs
-if (!process.argv[2] || !process.argv[3]) {
-  console.log('✨', 'Nothing changed!\nPlease define action and entity.');
-  return process.exit();
-}
+(async () => {
+  await connectToDatabase();
+  const action = await select({
+    message: 'Select a action',
+    choices: [
+      {
+        name: 'import',
+        value: 'import',
+        description: "import dev data to a database's collection"
+      },
+      {
+        name: 'delete',
+        value: 'delete',
+        description: 'delete all dev data documents from a database collection'
+      }
+    ]
+  });
 
-if (process.argv[2] == '-i' || process.argv[2] == '--import') {
-  if (process.argv[3]?.startsWith('tour')) importData(Tour, tours);
-  else if (process.argv[3]?.startsWith('review')) importData(Review, reviews);
-} else if (process.argv[2] == '-d' || process.argv[2] == '--delete') {
-  if (process.argv[3]?.startsWith('tour')) deleteData(Tour);
-  else if (process.argv[3]?.startsWith('review')) deleteData(Review);
-} else {
-  console.log('✨', 'Nothing changed!');
+  const collections = await checkbox({
+    message: `Which collection(s) do you want to ${action}`,
+    choices: [
+      { name: 'Tours', value: { model: Tour, data: tours } },
+      { name: 'Reviews', value: { model: Review, data: reviews } },
+      { name: 'Users', value: { model: User, data: users } }
+    ]
+  });
+
+  const promises = collections.map(collection => {
+    if (action === 'import') {
+      return importData(collection.model, collection.data);
+    } else if (action === 'delete') {
+      return deleteData(collection.model);
+    }
+  });
+  console.log('🕛', 'Proceeding...');
+  await Promise.all(promises);
   process.exit();
-}
-
-// ?> node import-dev-date.js -i OR node import-dev-date.js -import => Import Tours data in db
-// ?> node import-dev-date.js -d OR node import-dev-date.js -delete => Remove all Tours data from db
+})();
