@@ -5,11 +5,7 @@ const { setUserIdInParams } = require('./user.utils');
 
 const usersFilePath = `${__dirname}/../../../static/data/users.json`;
 
-exports.getAllUsers = async function(req, res) {
-  const users = await User.find();
-
-  return sendSuccessResponse(res, { users }, users.length);
-};
+exports.getAllUsers = factory.getAll(User);
 
 exports.createUser = (req, res) => {
   let newUser = req.body;
