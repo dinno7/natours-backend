@@ -8,30 +8,20 @@ router.post('/signup', authController.singUp);
 router.post('/login', authController.login);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
-router.patch(
-  '/updateMyPassword',
-  authController.protect,
-  authController.updateMyPassword
-);
-router.patch('/updateMe', authController.protect, authController.updateMe);
-router.delete('/deleteMe', authController.protect, authController.deleteMe);
-// router.get(
-//   '/getMe',
-//   authController.protect,
-//   userController.getMe,
-//   userController.getUserById
-// );
 
-router.route('/getMe').get(authController.protect, userController.getMe);
+// >> Protect all route after this middleware
+router.use(authController.protect);
+router.patch('/updateMyPassword', authController.updateMyPassword);
+router.patch('/updateMe', authController.updateMe);
+router.delete('/deleteMe', authController.deleteMe);
+router.route('/getMe').get(userController.getMe);
 
 // >> / ==> /api/v1/users
+router.use(authController.restrictTo('admin'));
 router
   .route('/')
   .get(userController.getAllUsers)
   .post(userController.createUser);
-
-router
-  .route('/:id')
-  .get(authController.restrictTo('admin'), userController.getUserById);
+router.route('/:id').get(userController.getUserById);
 
 module.exports = router;

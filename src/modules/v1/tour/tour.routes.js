@@ -12,22 +12,33 @@ router.use('/:tourId/reviews/:reviewId?', reviewsRouter);
 
 router
   .route('/')
-  .get(authController.protect, tourController.getAllTours)
-  .post(tourController.createTour);
+  .get(tourController.getAllTours)
+  .post(
+    authController.protectAndRestrictTo('admin', 'lead-guide'),
+    tourController.createTour
+  );
 
 router
   .route('/get-5-Top')
   .get(tourController.get5TopTours, tourController.getAllTours);
 
 router.route('/tours-status').get(tourController.getToursStatus);
-router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
+router
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protectAndRestrictTo('admin', 'lead-guide', 'guide'),
+    tourController.getMonthlyPlan
+  );
 
 router
   .route('/:id')
   .get(tourController.getTourById)
-  .patch(tourController.updateTour)
+  .patch(
+    authController.protectAndRestrictTo('admin', 'lead-guide'),
+    tourController.updateTour
+  )
   .delete(
-    authController.restrictTo('admin', 'lead-guide'),
+    authController.protectAndRestrictTo('admin', 'lead-guide'),
     tourController.deleteTour
   );
 
