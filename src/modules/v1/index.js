@@ -25,7 +25,7 @@ function registerRoutes(app) {
     return true;
   } catch (err) {
     console.error(
-      '⭕️ ~ ERROR  ~ in natours: src/modules/v1/index.js at line 7 ~> ❗',
+      '❌ ~ ERROR  ~ in natours: src/modules/v1/index.js at line 7 ~> ❗',
       err
     );
     return err;

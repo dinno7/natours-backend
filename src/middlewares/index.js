@@ -49,7 +49,7 @@ function registerMiddlewares(app) {
     return true;
   } catch (err) {
     console.error(
-      '⭕️ ~ ERROR  ~ in natours: src/middlewares/index.js at line 11 ~> ❗️',
+      '❌ ~ ERROR  ~ in natours: src/middlewares/index.js at line 11 ~> ❗️',
       err
     );
     return err;

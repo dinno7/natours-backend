@@ -45,7 +45,7 @@ function handleProdError(err, res) {
   } else {
     // >> 1) Log error:
     console.error(
-      '⭕️ ~ ERROR  ~ in natours: src/utils/errorController.js ~> ❗',
+      '❌ ~ ERROR  ~ in natours: src/utils/errorController.js ~> ❗',
       err
     );
 

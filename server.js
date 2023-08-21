@@ -29,7 +29,7 @@ mongoose
     useFindAndModify: false
   })
   .then(() => console.log('✨', 'Mogodb connected successful.'))
-  .catch(err => console.log('⭕️ ~ ERROR  ~ in natours: server.js ~> ❗', err));
+  .catch(err => console.log('❌ ~ ERROR  ~ in natours: server.js ~> ❗', err));
 
 const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, () => {
