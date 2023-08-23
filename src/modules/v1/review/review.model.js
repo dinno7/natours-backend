@@ -31,6 +31,22 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
+reviewSchema.index({ tour: 1, user: 1 }, { unique: true });
+// reviewSchema.pre('save', async function(next) {
+//   const allUserReviews = await this.constructor.find({
+//     user: this.user,
+//     tour: this.tour
+//   });
+//   if (allUserReviews.length >= 1)
+//     return next(
+//       new AppError(
+//         'Sorry, per user can just create one review for each tour.',
+//         400
+//       )
+//     );
+//   next();
+// });
+
 reviewSchema.pre(/^find/, function(next) {
   this.populate({ path: 'user', select: 'name' });
   next();
