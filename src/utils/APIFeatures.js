@@ -1,7 +1,6 @@
 class APIFeatures {
-  constructor(Model, queryStr, initialFindFilter = {}) {
-    this.Model = Model;
-    this.query = Model.find(initialFindFilter);
+  constructor(initialQuery, queryStr) {
+    this.query = initialQuery;
     this.queryStr = queryStr;
   }
   filter() {

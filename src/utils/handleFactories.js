@@ -63,7 +63,11 @@ module.exports = {
   getOneById: (Model, populateOptions = null) =>
     catchError(async function(req, res, next) {
       const modelName = getModelName(Model);
-      const query = Model.findById(req.params.id);
+      // const query = Model.findById(req.params.id);
+      const { query } = new APIFeatures(
+        Model.findById(req.params.id),
+        req.query
+      ).limitFields();
       if (populateOptions) query.populate(populateOptions);
       const doc = await query;
       if (!doc)
@@ -76,15 +80,16 @@ module.exports = {
       const modelName = getModelName(Model);
 
       let { query } = new APIFeatures(
-        Model,
-        req.query,
-        req.initialFilters || {}
+        Model.find(req.initialFilters || {}),
+        req.query
       )
         .filter()
         .sort()
         .limitFields()
         .paginate();
+      // const docs = await query.explain();
       const docs = await query;
+
       const responseObj = {
         [modelName + 's']: docs
       };
