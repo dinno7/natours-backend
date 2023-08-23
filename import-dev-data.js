@@ -1,4 +1,4 @@
-const { select, checkbox } = require('@inquirer/prompts');
+const { select, checkbox, confirm } = require('@inquirer/prompts');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const Tour = require('./src/modules/v1/tour/tour.model');
@@ -79,35 +79,66 @@ const deleteData = async Model => {
     message: 'Select a action',
     choices: [
       {
-        name: 'import',
+        name: '➕ import',
         value: 'import',
         description: "import dev data to a database's collection"
       },
       {
-        name: 'delete',
+        name: '➖ delete',
         value: 'delete',
         description: 'delete all dev data documents from a database collection'
+      },
+      {
+        name: 'exit',
+        value: 'exit',
+        description: 'Exit the program'
       }
     ]
   });
+  if (action === 'exit') {
+    console.clear();
+    console.log('✨', 'Good bye...');
+    return process.exit();
+  }
 
-  const collections = await checkbox({
+  let collections = await checkbox({
     message: `Which collection(s) do you want to ${action}`,
     choices: [
-      { name: 'Tours', value: { model: Tour, data: tours } },
-      { name: 'Reviews', value: { model: Review, data: reviews } },
-      { name: 'Users', value: { model: User, data: users } }
+      { name: '⚜ Tours', value: { model: Tour, data: tours, name: 'tours' } },
+      {
+        name: '⚜ Reviews',
+        value: { model: Review, data: reviews, name: 'reviews' }
+      },
+      { name: '⚜ Users', value: { model: User, data: users, name: 'users' } }
     ]
   });
 
-  const promises = collections.map(collection => {
+  const collectionNames = collections.map(c => c.name);
+  if (action === 'import' && collectionNames.includes('users')) {
+    const isCommentUserMiddlewares = await confirm({
+      message: 'Are you comment all User model middlewares?'
+    });
+    if (!isCommentUserMiddlewares) {
+      collections = collections.filter(c => c.name !== 'users');
+      console.log(
+        '❌',
+        'The User collection is not valid to import\nbecause passwords encrypted there so you do not access to password for login in development\nPlease first comment all database middlewares in user model.'
+      );
+      if (collectionNames.length === 1 && collectionNames[0] === 'users')
+        return process.exit(1);
+    }
+  }
+
+  const promises = collections.map(async collection => {
     if (action === 'import') {
       return importData(collection.model, collection.data);
     } else if (action === 'delete') {
       return deleteData(collection.model);
     }
   });
-  console.log('🕛', 'Proceeding...');
+  console.log('🕛', 'Proceeding');
+  console.log(' >', 'Please wait...\n');
+
   await Promise.all(promises);
   process.exit();
 })();
