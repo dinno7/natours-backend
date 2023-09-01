@@ -1,5 +1,5 @@
 const Tour = require('./tour.model');
-const { catchError, factory } = require('../../../utils');
+const { catchError, factory, AppError } = require('../../../utils');
 const { sendSuccessResponse } = require('../../../utils/global');
 
 exports.get5TopTours = function(req, res, next) {
@@ -101,3 +101,56 @@ exports.getTourById = factory.getOneById(Tour, 'reviews');
 exports.createTour = factory.createOne(Tour);
 exports.updateTour = factory.updateOne(Tour);
 exports.deleteTour = factory.deleteOne(Tour);
+exports.getTourWithin = catchError(async function(req, res, next) {
+  // /tour-within/:distance/center/:latlng/unit/:unit
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+  if (!lat || !lng)
+    return next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400
+      )
+    );
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } }
+  });
+
+  return sendSuccessResponse(res, { tours }, tours.length);
+});
+
+exports.getDistances = catchError(async function(req, res, next) {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+  if (!lat || !lng)
+    return next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400
+      )
+    );
+
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [+lng, +lat]
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier
+      }
+    },
+    {
+      $project: {
+        distance: 1,
+        name: 1
+      }
+    }
+  ]);
+
+  return sendSuccessResponse(res, { distances }, distances.length);
+});

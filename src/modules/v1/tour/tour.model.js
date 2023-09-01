@@ -114,6 +114,8 @@ tourSchema.virtual('reviews', {
   localField: '_id'
 });
 
+tourSchema.index({ startLocation: '2dsphere' });
+
 // >> Just in .save() and create(...)
 tourSchema.pre('save', function(next) {
   this.slug = slugify(this.name, { lower: true, trim: true });
@@ -122,6 +124,15 @@ tourSchema.pre('save', function(next) {
 
 tourSchema.pre(/^find/, function(next) {
   this.find({ secretTour: { $ne: true } });
+  next();
+});
+
+tourSchema.pre('aggregate', function(next) {
+  const pipeline = this.pipeline();
+  // The $geoNear pipeline must be first all the time
+  if (Object.keys(pipeline[0]).includes('$geoNear'))
+    pipeline.splice(1, 0, { $match: { secretTour: { $ne: true } } });
+  else pipeline.unshift({ $match: { secretTour: { $ne: true } } });
   next();
 });
 
