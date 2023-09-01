@@ -5,7 +5,7 @@
 const { AppError } = require('../../utils');
 const errorController = require('./global/error.controller');
 const allRoutes = require('./routes');
-function registerRoutes(app) {
+function bootstrapRoutes(app) {
   try {
     const apiVersion = __dirname.split('/').at(-1);
     for (let route in allRoutes) {
@@ -32,4 +32,4 @@ function registerRoutes(app) {
   }
 }
 
-module.exports = registerRoutes;
+module.exports = bootstrapRoutes;

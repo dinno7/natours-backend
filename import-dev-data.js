@@ -89,7 +89,7 @@ const deleteData = async Model => {
         description: 'delete all dev data documents from a database collection'
       },
       {
-        name: 'exit',
+        name: '🚪 exit',
         value: 'exit',
         description: 'Exit the program'
       }

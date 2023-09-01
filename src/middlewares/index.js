@@ -7,7 +7,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 
-function registerMiddlewares(app) {
+function bootstrapMiddlewares(app) {
   try {
     // Helmet, Set http headers
     app.use(helmet());
@@ -56,4 +56,4 @@ function registerMiddlewares(app) {
   }
 }
 
-module.exports = registerMiddlewares;
+module.exports = bootstrapMiddlewares;

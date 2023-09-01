@@ -27,7 +27,7 @@ exports.filterObj = function(obj, ...allowedFields) {
 
 exports.sendSuccessResponse = function(
   res,
-  data = {},
+  data = undefined,
   resultCount = undefined,
   statusCode = 200,
   bodyData = {}
