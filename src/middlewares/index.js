@@ -1,12 +1,13 @@
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
-const path = require('path');
 
 function bootstrapMiddlewares(app) {
   try {
@@ -22,6 +23,7 @@ function bootstrapMiddlewares(app) {
     }
     // Rate limiting
     app.use(
+      '/api',
       rateLimit({
         max: 100,
         windowMx: 1000 * 60 * 60,
@@ -42,6 +44,8 @@ function bootstrapMiddlewares(app) {
         limit: '10kb'
       })
     );
+    // Cookie parser
+    app.use(cookieParser());
     // Data sanitization against NoSQL query injection
     app.use(mongoSanitize());
     // Prevent XSS attacks
@@ -49,7 +53,7 @@ function bootstrapMiddlewares(app) {
     // Preventing parameters pollution
     app.use(hpp());
     // app.use('/api/v1/tours', hpp({ whitelist: ['duration', 'price] }));
-    app.use(express.static(`${__dirname}/../public`));
+    app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
     return true;
   } catch (err) {

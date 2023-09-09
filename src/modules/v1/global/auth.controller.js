@@ -4,7 +4,7 @@ const { promisify } = require('util');
 const User = require('../user/user.model');
 const { AppError, catchError } = require('../../../utils');
 const { sendEmail } = require('./email.controller');
-const { filterObj, sendSuccessResponse } = require('../../../utils/global');
+const { sendSuccessResponse } = require('../../../utils/global');
 const { createSendJWTToken } = require('../user/user.utils');
 
 // >> Controllers:
@@ -37,12 +37,23 @@ exports.login = catchError(async function(req, res, next) {
   createSendJWTToken(res, user, 200);
 });
 
+exports.logout = async function(req, res, next) {
+  res.cookie('jwt', '', {
+    expires: new Date(Date.now() - 10 * 1000),
+    httpOnly: true
+  });
+
+  return sendSuccessResponse(res);
+};
+
 exports.protect = catchError(async function(req, res, next) {
   // 1) Getting token and check of it's there
   const { authorization } = req.headers;
   let token = null;
   if (authorization && authorization.startsWith('Bearer')) {
     token = authorization.split(' ').at(-1);
+  } else if (req?.cookies?.jwt) {
+    token = req.cookies.jwt;
   }
   if (!token)
     return next(
@@ -72,11 +83,12 @@ exports.protect = catchError(async function(req, res, next) {
       new AppError('User changed password recently, please login again', 401)
     );
   req.user = currentUser;
+  res.locals.user = currentUser;
   next();
 });
 
 exports.restrictTo = (...roles) => (req, res, next) => {
-  const user = req.user;
+  const user = res.locals.user;
   if (!user || !roles.includes(user.role))
     return next(
       new AppError('You do not have permission to perform this action', 403)
@@ -88,6 +100,35 @@ exports.protectAndRestrictTo = (...roles) => [
   this.protect,
   this.restrictTo(...roles)
 ];
+
+// Just for use in views...
+exports.isLoggedIn = async function(req, res, next) {
+  try {
+    // 1) Getting token and check of it's there
+    if (req?.cookies?.jwt) {
+      // 2) Verification token
+      const decoded = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET_64
+      );
+
+      // 3) Check if user still exist
+      const currentUser = await User.findById(decoded.id).select([
+        '-__v',
+        '+password'
+      ]);
+      if (!currentUser) return next();
+
+      // 4) Check if user changed password after the token was issued
+      if (currentUser.changedPasswordAfter(decoded.iat)) return next();
+      res.locals.user = currentUser;
+      return next();
+    }
+  } catch (error) {
+    return next();
+  }
+  next();
+};
 
 exports.forgotPassword = catchError(async function(req, res, next) {
   // 1) Get user based on POSTed email
@@ -167,67 +208,4 @@ exports.resetPassword = catchError(async function(req, res, next) {
 
   // 4) Create and send JWT token
   createSendJWTToken(res, user, 200);
-});
-
-exports.updateMyPassword = catchError(async function(req, res, next) {
-  if (!req?.user?._id) return next(new AppError('Please login first', 401));
-
-  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
-  if (!currentPassword || !newPassword || !newPasswordConfirm)
-    return next(
-      new AppError(
-        'Please provide your current password and new password and confirm of new password',
-        400
-      )
-    );
-
-  if (currentPassword === newPassword)
-    return next(
-      new AppError(
-        'Your new password is your current password, please choose another one',
-        400
-      )
-    );
-
-  const user = await User.findById(req.user._id).select('+password');
-  if (!(await user.isPasswordCorrect(currentPassword, req.user.password)))
-    return next(new AppError('Your current password is wrong', 401));
-
-  user.password = newPassword;
-  user.passwordConfirm = newPasswordConfirm;
-  await user.save();
-
-  createSendJWTToken(res, user, 200);
-});
-
-exports.updateMe = catchError(async function(req, res, next) {
-  const body = req.body;
-  // 1) Create error if user POSTs password data
-  if (body.password || body.passwordConfirm)
-    return next(
-      new AppError(
-        'This route is not for password update. Please use /updateMyPassword',
-        400
-      )
-    );
-
-  // 2) Filter out unwanted fields
-  const filteredFields = filterObj(body, 'name', 'email');
-
-  // 3) Update user document
-  const updatedUser = await User.findByIdAndUpdate(
-    req.user._id,
-    filteredFields,
-    { new: true, runValidators: true }
-  ).select('-password -passwordResetToken -passwordResetExpires');
-
-  return sendSuccessResponse(res, { user: updatedUser }, 1);
-});
-
-exports.deleteMe = catchError(async function(req, res, next) {
-  await User.findByIdAndUpdate(req.user._id, {
-    active: false
-  });
-
-  return sendSuccessResponse(res, null);
 });
