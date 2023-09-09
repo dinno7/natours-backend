@@ -71,7 +71,7 @@ exports.generatePasswordResetToken = function () {
 
 exports.changedPasswordAfter = function (JWTTimeStamp) {
   if (this.passwordUpdatedAt) {
-    const passwordUpdatedAtTimestamp = parseInt(this.passwordUpdatedAt.getTime() / 1000);
+    const passwordUpdatedAtTimestamp = parseInt(this.passwordUpdatedAt.getTime() / 1000, 10);
 
     return passwordUpdatedAtTimestamp > JWTTimeStamp;
   }
