@@ -4,41 +4,35 @@ const AppError = require('./appError');
 const { sendSuccessResponse, getModelName } = require('./global');
 
 module.exports = {
-  deleteOne: Model =>
-    catchError(async function(req, res, next) {
-      let modelName = getModelName(Model);
+  deleteOne: (Model) =>
+    catchError(async function (req, res, next) {
+      const modelName = getModelName(Model);
 
       const deletedDoc = await Model.findByIdAndDelete(req.params.id);
 
-      if (!deletedDoc)
-        return next(
-          new AppError(`The ${modelName} with this id is not exist`, 404)
-        );
+      if (!deletedDoc) return next(new AppError(`The ${modelName} with this id is not exist`, 404));
 
       return sendSuccessResponse(res, null);
     }),
 
-  updateOne: Model =>
-    catchError(async function(req, res, next) {
-      let modelName = getModelName(Model);
+  updateOne: (Model) =>
+    catchError(async function (req, res, next) {
+      const modelName = getModelName(Model);
 
-      let params = JSON.parse(JSON.stringify(req.body));
+      const params = JSON.parse(JSON.stringify(req.body));
       const updatedDoc = await Model.findByIdAndUpdate(
         req.params.id,
         {
-          $set: params
+          $set: params,
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
-      if (!updatedDoc)
-        return next(
-          new AppError(`Can not find ${modelName} with this id`, 404)
-        );
+      if (!updatedDoc) return next(new AppError(`Can not find ${modelName} with this id`, 404));
 
       // Separate updated fields
-      let updatedFields = {};
-      Object.keys(params).forEach(field => {
+      const updatedFields = {};
+      Object.keys(params).forEach((field) => {
         updatedFields[field] = updatedDoc[field];
       });
 
@@ -47,8 +41,8 @@ module.exports = {
     }),
 
   createOne: (Model, beforeCreateCB = null, afterCreateCB = null) =>
-    catchError(async function(req, res, next) {
-      let modelName = getModelName(Model);
+    catchError(async function (req, res, next) {
+      const modelName = getModelName(Model);
 
       if (beforeCreateCB) beforeCreateCB?.(req, res, next);
 
@@ -61,28 +55,21 @@ module.exports = {
     }),
 
   getOneById: (Model, populateOptions = null) =>
-    catchError(async function(req, res, next) {
+    catchError(async function (req, res, next) {
       const modelName = getModelName(Model);
       // const query = Model.findById(req.params.id);
-      const { query } = new APIFeatures(
-        Model.findById(req.params.id),
-        req.query
-      ).limitFields();
+      const { query } = new APIFeatures(Model.findById(req.params.id), req.query).limitFields();
       if (populateOptions) query.populate(populateOptions);
       const doc = await query;
-      if (!doc)
-        return next(new AppError(`There is no ${modelName} with sent id`, 404));
+      if (!doc) return next(new AppError(`There is no ${modelName} with sent id`, 404));
       return sendSuccessResponse(res, { [modelName]: doc }, 1);
     }),
 
-  getAll: Model =>
-    catchError(async function(req, res, next) {
+  getAll: (Model) =>
+    catchError(async function (req, res, next) {
       const modelName = getModelName(Model);
 
-      let { query } = new APIFeatures(
-        Model.find(req.initialFilters || {}),
-        req.query
-      )
+      const { query } = new APIFeatures(Model.find(req.initialFilters || {}), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -91,14 +78,13 @@ module.exports = {
       const docs = await query;
 
       const responseObj = {
-        [modelName + 's']: docs
+        [`${modelName}s`]: docs,
       };
 
       if (req.query?.page && req.query?.limit) {
-        allDocCountForPagination = await Model.estimatedDocumentCount();
-        responseObj.allCounts = allDocCountForPagination;
+        responseObj.allCounts = await Model.estimatedDocumentCount();
       }
 
       return sendSuccessResponse(res, responseObj, docs.length);
-    })
+    }),
 };
