@@ -13,7 +13,9 @@ exports.createSendJWTToken = function (res, user, statusCode = 200) {
   const jwtToken = exports.generateJWTToken(user._id);
 
   const cookieOptions = {
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 1000 * 60 * 60 * 24),
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 1000 * 60 * 60 * 24,
+    ),
     httpOnly: true,
   };
 
@@ -71,7 +73,10 @@ exports.generatePasswordResetToken = function () {
 
 exports.changedPasswordAfter = function (JWTTimeStamp) {
   if (this.passwordUpdatedAt) {
-    const passwordUpdatedAtTimestamp = parseInt(this.passwordUpdatedAt.getTime() / 1000, 10);
+    const passwordUpdatedAtTimestamp = parseInt(
+      this.passwordUpdatedAt.getTime() / 1000,
+      10,
+    );
 
     return passwordUpdatedAtTimestamp > JWTTimeStamp;
   }

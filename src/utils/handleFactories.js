@@ -10,7 +10,10 @@ module.exports = {
 
       const deletedDoc = await Model.findByIdAndDelete(req.params.id);
 
-      if (!deletedDoc) return next(new AppError(`The ${modelName} with this id is not exist`, 404));
+      if (!deletedDoc)
+        return next(
+          new AppError(`The ${modelName} with this id is not exist`, 404),
+        );
 
       return sendSuccessResponse(res, null);
     }),
@@ -28,7 +31,10 @@ module.exports = {
         { new: true, runValidators: true },
       );
 
-      if (!updatedDoc) return next(new AppError(`Can not find ${modelName} with this id`, 404));
+      if (!updatedDoc)
+        return next(
+          new AppError(`Can not find ${modelName} with this id`, 404),
+        );
 
       // Separate updated fields
       const updatedFields = {};
@@ -58,10 +64,14 @@ module.exports = {
     catchError(async function (req, res, next) {
       const modelName = getModelName(Model);
       // const query = Model.findById(req.params.id);
-      const { query } = new APIFeatures(Model.findById(req.params.id), req.query).limitFields();
+      const { query } = new APIFeatures(
+        Model.findById(req.params.id),
+        req.query,
+      ).limitFields();
       if (populateOptions) query.populate(populateOptions);
       const doc = await query;
-      if (!doc) return next(new AppError(`There is no ${modelName} with sent id`, 404));
+      if (!doc)
+        return next(new AppError(`There is no ${modelName} with sent id`, 404));
       return sendSuccessResponse(res, { [modelName]: doc }, 1);
     }),
 
@@ -69,7 +79,10 @@ module.exports = {
     catchError(async function (req, res, next) {
       const modelName = getModelName(Model);
 
-      const { query } = new APIFeatures(Model.find(req.initialFilters || {}), req.query)
+      const { query } = new APIFeatures(
+        Model.find(req.initialFilters || {}),
+        req.query,
+      )
         .filter()
         .sort()
         .limitFields()

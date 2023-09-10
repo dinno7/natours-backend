@@ -30,9 +30,9 @@ function bootstrapMiddlewares(app) {
         message: {
           ok: false,
           status: 'fail',
-          message: 'Too many attempt, please try again in an hour!'
-        }
-      })
+          message: 'Too many attempt, please try again in an hour!',
+        },
+      }),
     );
 
     // Body parser, insert data to req.body
@@ -41,8 +41,8 @@ function bootstrapMiddlewares(app) {
       bodyParser.urlencoded({
         extended: true,
         parameterLimit: 100000,
-        limit: '10kb'
-      })
+        limit: '10kb',
+      }),
     );
     // Cookie parser
     app.use(cookieParser());
@@ -59,7 +59,7 @@ function bootstrapMiddlewares(app) {
   } catch (err) {
     console.error(
       '❌ ~ ERROR  ~ in natours: src/middlewares/index.js at line 11 ~> ❗️',
-      err
+      err,
     );
     return err;
   }

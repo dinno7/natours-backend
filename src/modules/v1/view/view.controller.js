@@ -10,29 +10,29 @@ exports.getTour = catchError(async (req, res, next) => {
   const tour = await Tour.findOne({ slug: req.params.slug }).populate([
     {
       path: 'reviews',
-      select: 'review rating user'
+      select: 'review rating user',
     },
     {
       path: 'guides',
-      select: 'name role photo'
-    }
+      select: 'name role photo',
+    },
   ]);
   res.render('tour', { tour, title: tour.name });
 });
 
-exports.login = function(req, res, next) {
+exports.login = function (req, res, next) {
   res.render('login', {
-    title: 'Login into your account'
+    title: 'Login into your account',
   });
 };
-exports.signup = function(req, res, next) {
+exports.signup = function (req, res, next) {
   res.render('signup', {
-    title: 'Register'
+    title: 'Register',
   });
 };
 
-exports.account = async function(req, res, next) {
+exports.account = async function (req, res, next) {
   res.render('account', {
-    title: 'Your account'
+    title: 'Your account',
   });
 };

@@ -8,19 +8,19 @@ const { sendSuccessResponse } = require('../../../utils/global');
 const { createSendJWTToken } = require('../user/user.utils');
 
 // >> Controllers:
-exports.singUp = catchError(async function(req, res, next) {
+exports.singUp = catchError(async function (req, res, next) {
   const { name, email, password, passwordConfirm } = req.body;
   const newUser = await User.create({
     name,
     email,
     password,
-    passwordConfirm
+    passwordConfirm,
   });
 
   createSendJWTToken(res, newUser, 201);
 });
 
-exports.login = catchError(async function(req, res, next) {
+exports.login = catchError(async function (req, res, next) {
   const { email, password } = req.body;
 
   // Check email and password that came from front-end
@@ -37,16 +37,16 @@ exports.login = catchError(async function(req, res, next) {
   createSendJWTToken(res, user, 200);
 });
 
-exports.logout = async function(req, res, next) {
+exports.logout = async function (req, res, next) {
   res.cookie('jwt', '', {
     expires: new Date(Date.now() - 10 * 1000),
-    httpOnly: true
+    httpOnly: true,
   });
 
   return sendSuccessResponse(res);
 };
 
-exports.protect = catchError(async function(req, res, next) {
+exports.protect = catchError(async function (req, res, next) {
   // 1) Getting token and check of it's there
   const { authorization } = req.headers;
   let token = null;
@@ -58,7 +58,7 @@ exports.protect = catchError(async function(req, res, next) {
   if (!token)
     return next(
       new AppError('You are not logged in, please login to get access'),
-      401
+      401,
     );
 
   // 2) Verification token
@@ -67,55 +67,57 @@ exports.protect = catchError(async function(req, res, next) {
   // 3) Check if user still exist
   const currentUser = await User.findById(decoded.id).select([
     '-__v',
-    '+password'
+    '+password',
   ]);
   if (!currentUser)
     return next(
       new AppError(
         'The user related by this token is not exist, please signup or login',
-        401
-      )
+        401,
+      ),
     );
 
   // 4) Check if user changed password after the token was issued
   if (currentUser.changedPasswordAfter(decoded.iat))
     return next(
-      new AppError('User changed password recently, please login again', 401)
+      new AppError('User changed password recently, please login again', 401),
     );
   req.user = currentUser;
   res.locals.user = currentUser;
   next();
 });
 
-exports.restrictTo = (...roles) => (req, res, next) => {
-  const user = res.locals.user;
-  if (!user || !roles.includes(user.role))
-    return next(
-      new AppError('You do not have permission to perform this action', 403)
-    );
-  next();
-};
+exports.restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    const user = res.locals.user;
+    if (!user || !roles.includes(user.role))
+      return next(
+        new AppError('You do not have permission to perform this action', 403),
+      );
+    next();
+  };
 
 exports.protectAndRestrictTo = (...roles) => [
   this.protect,
-  this.restrictTo(...roles)
+  this.restrictTo(...roles),
 ];
 
 // Just for use in views...
-exports.isLoggedIn = async function(req, res, next) {
+exports.isLoggedIn = async function (req, res, next) {
   try {
     // 1) Getting token and check of it's there
     if (req?.cookies?.jwt) {
       // 2) Verification token
       const decoded = await promisify(jwt.verify)(
         req.cookies.jwt,
-        process.env.JWT_SECRET_64
+        process.env.JWT_SECRET_64,
       );
 
       // 3) Check if user still exist
       const currentUser = await User.findById(decoded.id).select([
         '-__v',
-        '+password'
+        '+password',
       ]);
       if (!currentUser) return next();
 
@@ -130,7 +132,7 @@ exports.isLoggedIn = async function(req, res, next) {
   next();
 };
 
-exports.forgotPassword = catchError(async function(req, res, next) {
+exports.forgotPassword = catchError(async function (req, res, next) {
   // 1) Get user based on POSTed email
   const { email } = req.body;
   if (!email) return next(new AppError('Please provide email address', 400));
@@ -141,7 +143,7 @@ exports.forgotPassword = catchError(async function(req, res, next) {
   user.save({ validateBeforeSave: false });
   // 3) Send it to user's email
   const resetUrl = `${req.protocol}://${req.get(
-    'host'
+    'host',
   )}/api/v1/users/resetPassword/${resetToken}`;
   const message = `Forgot your password?
     Submit a PATCH request with your new password and confirm password to: ${resetUrl}
@@ -151,12 +153,12 @@ exports.forgotPassword = catchError(async function(req, res, next) {
     await sendEmail({
       email: user.email,
       subject: 'Reset your password (Validate for 10 mins)',
-      message
+      message,
     });
 
     return sendSuccessResponse(res, {
       message:
-        'We sent email contain reset password url, check your email inbox'
+        'We sent email contain reset password url, check your email inbox',
     });
   } catch (error) {
     user.passwordResetToken = undefined;
@@ -166,13 +168,13 @@ exports.forgotPassword = catchError(async function(req, res, next) {
     return next(
       new AppError(
         'There was an error sending the email, please try again later!',
-        500
-      )
+        500,
+      ),
     );
   }
 });
 
-exports.resetPassword = catchError(async function(req, res, next) {
+exports.resetPassword = catchError(async function (req, res, next) {
   const { newPassword, newPasswordConfirm } = req.body;
   const { token } = req.params;
   // 1) Check password, passwordConfirm, token existence
@@ -180,15 +182,15 @@ exports.resetPassword = catchError(async function(req, res, next) {
     return next(
       new AppError(
         'Please provide new password and confirm password and reset password token',
-        400
-      )
+        400,
+      ),
     );
 
   // 2) Find user by token and token expires date
   const user = await User.getUserByResetPasswordToken(token);
   if (!user)
     return next(
-      new AppError("Invalid token or token's expires time has reached!", 403)
+      new AppError("Invalid token or token's expires time has reached!", 403),
     );
 
   // 3) Check if user choose new password similar current password
@@ -196,8 +198,8 @@ exports.resetPassword = catchError(async function(req, res, next) {
     return next(
       new AppError(
         'You can not choose new password similar your current password, Login again with this password or choose another new password',
-        400
-      )
+        400,
+      ),
     );
   // 3) Set new password for user
   user.password = newPassword;

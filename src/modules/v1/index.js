@@ -5,19 +5,20 @@
 const { AppError } = require('../../utils');
 const errorController = require('./global/error.controller');
 const allRoutes = require('./routes');
+
 function bootstrapRoutes(app) {
   try {
     const apiVersion = __dirname.split('/').at(-1);
-    for (let route in allRoutes) {
+    Object.keys(allRoutes).forEach((route) => {
       app.use(`/api/${apiVersion}/${route}`, allRoutes[route]);
-    }
+    });
 
     // >> Handle 404 routes on service
-    app.all('*', (req, res, next) => {
-      return next(
-        new AppError(`Can't find (${req.originalUrl}) on this service.`, 501)
-      );
-    });
+    app.all('*', (req, res, next) =>
+      next(
+        new AppError(`Can't find (${req.originalUrl}) on this service.`, 400),
+      ),
+    );
 
     // >> Global error handler
     app.use(errorController);
@@ -26,7 +27,7 @@ function bootstrapRoutes(app) {
   } catch (err) {
     console.error(
       '❌ ~ ERROR  ~ in natours: src/modules/v1/index.js at line 7 ~> ❗',
-      err
+      err,
     );
     return err;
   }

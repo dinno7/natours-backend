@@ -1,4 +1,5 @@
 const { Router } = require('express');
+
 const router = Router();
 
 const tourController = require('./tour.controllers');
