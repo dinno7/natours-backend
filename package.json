@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "nodemon server.js -e js,ts,html,json",
     "prod": "NODE_ENV=production nodemon server.js",
+    "lint": "eslint --fix --ext .js,.jsx .",
     "dev-data": "node import-dev-data.js",
     "watch:js": "parcel watch ./public/js/index.js --out-dir ./public/js/dist --out-file bundle.js"
   },

@@ -90,7 +90,7 @@ exports.protect = catchError(async function (req, res, next) {
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    const user = res.locals.user;
+    const {user} = res.locals;
     if (!user || !roles.includes(user.role))
       return next(
         new AppError('You do not have permission to perform this action', 403),
