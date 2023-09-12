@@ -3,7 +3,7 @@ const { promisify } = require('util');
 
 const User = require('../user/user.model');
 const { AppError, catchError } = require('../../../utils');
-const { sendEmail } = require('./email.controller');
+const Email = require('./email.controller');
 const { sendSuccessResponse } = require('../../../utils/global');
 const { createSendJWTToken } = require('../user/user.utils');
 
@@ -17,7 +17,12 @@ exports.singUp = catchError(async function (req, res, next) {
     passwordConfirm,
   });
 
-  createSendJWTToken(res, newUser, 201);
+  setImmediate(async () => {
+    const userAccountUrl = `${req.protocol}://${req.get('host')}/me`;
+    await new Email(newUser, userAccountUrl).sendWelcome();
+  });
+
+  return createSendJWTToken(res, newUser, 201);
 });
 
 exports.login = catchError(async function (req, res, next) {
@@ -90,7 +95,7 @@ exports.protect = catchError(async function (req, res, next) {
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    const {user} = res.locals;
+    const { user } = res.locals;
     if (!user || !roles.includes(user.role))
       return next(
         new AppError('You do not have permission to perform this action', 403),
@@ -145,16 +150,9 @@ exports.forgotPassword = catchError(async function (req, res, next) {
   const resetUrl = `${req.protocol}://${req.get(
     'host',
   )}/api/v1/users/resetPassword/${resetToken}`;
-  const message = `Forgot your password?
-    Submit a PATCH request with your new password and confirm password to: ${resetUrl}
-    If you did not forgot your password, please ignore this email!`;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Reset your password (Validate for 10 mins)',
-      message,
-    });
+    await new Email(user, resetUrl).sendResetPasswordUrl();
 
     return sendSuccessResponse(res, {
       message:
